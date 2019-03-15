@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package trainer
 
 import (
@@ -29,25 +30,25 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AISphere/ffdl-commons/config"
-	"github.com/AISphere/ffdl-commons/logger"
-	"github.com/AISphere/ffdl-commons/metricsmon"
-	"github.com/AISphere/ffdl-lcm/service"
-	tdsClient "github.com/AISphere/ffdl-model-metrics/client"
-	tdsService "github.com/AISphere/ffdl-model-metrics/service/grpc_training_data_v1"
-	trainerClient "github.com/AISphere/ffdl-trainer/client"
-	"github.com/AISphere/ffdl-trainer/instrumentation"
-	client "github.com/AISphere/ffdl-trainer/lcm-client"
-	rlClient "github.com/AISphere/ffdl-trainer/plugins/ratelimiter"
-	rlService "github.com/AISphere/ffdl-trainer/plugins/ratelimiter/service/grpc_ratelimiter_v1"
-	"github.com/AISphere/ffdl-trainer/storage"
-	"github.com/AISphere/ffdl-trainer/trainer/grpc_trainer_v2"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/discard"
 	"github.com/nu7hatch/gouuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ventu-io/go-shortid"
+	"github.com/AISphere/ffdl-commons/config"
+	"github.com/AISphere/ffdl-commons/logger"
+	"github.com/AISphere/ffdl-commons/metricsmon"
+	"github.com/AISphere/ffdl-lcm/service"
+	"github.com/AISphere/ffdl-lcm/service/client"
+	rlClient "github.com/AISphere/ffdl/ratelimiter/client"
+	rlService "github.com/AISphere/ffdl/ratelimiter/service/grpc_ratelimiter_v1"
+	trainerClient "github.com/AISphere/ffdl-trainer/client"
+	"github.com/AISphere/ffdl-trainer/instrumentation"
+	"github.com/AISphere/ffdl-trainer/storage"
+	"github.com/AISphere/ffdl-trainer/trainer/grpc_trainer_v2"
+	tdsClient "github.com/AISphere/ffdl-model-metrics/client"
+	tdsService "github.com/AISphere/ffdl-model-metrics/service/grpc_training_data_v1"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -206,8 +207,6 @@ type trainerService struct {
 func NewService() Service {
 	logr := logger.LogServiceBasic(logger.LogkeyTrainerService)
 
-	logr.Info("Entry into NewService()")
-
 	config.FatalOnAbsentKey(mongoAddressKey)
 	config.SetDefault(gpuLimitsQuerySizeKey, 200)
 	config.SetDefault(pollIntervalKey, 60) // in seconds
@@ -260,7 +259,6 @@ func NewService() Service {
 		createTrainingDuration: metricsmon.NewSummary("trainer_create_time_duration", "Time duration for create training job", []string{}),
 	}
 
-	logr.Info("Calling initMetrics()")
 	initMetrics(&trainerMetrics)
 	var ds storage.DataStore
 	var err error
@@ -281,7 +279,6 @@ func NewService() Service {
 		logr.Infof("Not using a dlaas object store")
 	}
 
-	logr.Info("Calling newTrainingsRepository()")
 	repo, err := newTrainingsRepository(viper.GetString(mongoAddressKey),
 		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
 		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), "training_jobs")
@@ -289,7 +286,6 @@ func NewService() Service {
 		logr.WithError(err).Fatalf("Cannot create repository with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
 		trainerMetrics.trainerServiceRestartCounter.With("reason", "createrepository").Add(1)
 	}
-	logr.Info("back from newTrainingsRepository()")
 	jobHistoryRepo, err := newJobHistoryRepository(viper.GetString(mongoAddressKey),
 		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
 		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), collectionNameJobHistory)
@@ -348,7 +344,6 @@ func NewService() Service {
 	logr.Infof("Bucket for trained models: %s", s.trainedModelsBucket)
 	logr.Infof("Datastore type is of type: %s", fmt.Sprintf("%T", ds))
 
-	logr.Info("calling RegisterTrainerServer()")
 	s.RegisterService = func() {
 		grpc_trainer_v2.RegisterTrainerServer(s.Server, s)
 	}
@@ -847,8 +842,7 @@ func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_traine
 	zone := ""
 	if qSize == 0 {
 		// ignore possible errors reaching dlaas-ratelimiter
-		//rateLimited, zone, _ = s.rateLimitTrainingJob(tr, logr)
-		rateLimited = false
+		rateLimited, zone, _ = s.rateLimitTrainingJob(tr, logr)
 	}
 
 	if rateLimited {

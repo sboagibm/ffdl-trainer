@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+
 package trainer
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/AISphere/ffdl-commons/logger"
 	"github.com/AISphere/ffdl-trainer/trainer/grpc_trainer_v2"
-	log "github.com/sirupsen/logrus"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

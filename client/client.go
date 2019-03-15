@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package client
 
 import (
@@ -22,9 +23,9 @@ import (
 	"github.com/AISphere/ffdl-commons/config"
 	"github.com/AISphere/ffdl-commons/util"
 
-	"github.com/AISphere/ffdl-trainer/trainer/grpc_trainer_v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/AISphere/ffdl-trainer/trainer/grpc_trainer_v2"
 	"google.golang.org/grpc"
 )
 
@@ -49,24 +50,23 @@ type trainerClient struct {
 // service. If the dns_server config option is set to 'disabled', it will
 // default to the pre-defined LocalPort of the service.
 func NewTrainer() (TrainerClient, error) {
-	return NewTrainerWithAddress(TrainerV2LocalAddress)
+	address := fmt.Sprintf("%s.%s.svc.cluster.local:80", config.GetTrainerServiceName(), config.GetPodNamespace())
+	dnsServer := viper.GetString("dns_server")
+	if dnsServer == disabled { // for local testing without DNS server
+		address = TrainerV2LocalAddress
+	}
+	return NewTrainerWithAddress(address)
 }
 
 // NewTrainerWithAddress create a new load-balanced client to talk to the Trainer
 // service. If the dns_server config option is set to 'disabled', it will
 // default to the pre-defined LocalPort of the service.
 func NewTrainerWithAddress(addr string) (TrainerClient, error) {
-	address := fmt.Sprintf("%s.%s.svc.cluster.local:80", config.GetValue(config.TrainerServiceName), config.GetPodNamespace())
-	dnsServer := viper.GetString("dns_server")
-	if dnsServer == disabled { // for local testing without DNS server
-		address = addr
-	}
-
 	dialOpts, err := util.CreateClientDialOpts()
 	if err != nil {
 		return nil, err
 	}
-	conn, err := grpc.Dial(address, dialOpts...)
+	conn, err := grpc.Dial(addr, dialOpts...)
 	if err != nil {
 		log.Errorf("Could not connect to trainer service: %v", err)
 		return nil, err

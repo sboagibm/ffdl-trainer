@@ -26,6 +26,13 @@ TOOLCHAIN_DOCKER_NAMESPACE ?= ffdl
 TOOLCHAIN_DOCKER_IMG_NAME ?= ffdlbuildtools
 TOOLCHAIN_IMAGE_TAG ?= v1
 
+# === Health Checker Sub Build ===
+
+build-health-checker-deps: clean-health-checker-builds
+	mkdir build
+	cp -r vendor/github.com/AISphere/ffdl-commons/grpc-health-checker build/
+	cd build/grpc-health-checker && make build-x86-64
+
 clean-ratelimiter:                     ## clean ratelimiter artifacts
 	rm -rf $(RATELIMITER_LOCATION)/$(RATELIMITER_SUBDIR)
 
@@ -40,7 +47,7 @@ protoc-ratelimiter:  clean-ratelimiter ## Make the rate limiter plugin client, d
 
 protoc: protoc-lcm protoc-tds          ## Make gRPC proto clients, depends on `make glide` being run first
 
-install-deps: protoc-ratelimiter install-deps-base protoc  ## Remove vendor directory, rebuild dependencies
+install-deps: protoc-ratelimiter install-deps-base protoc build-health-checker-deps  ## Remove vendor directory, rebuild dependencies
 
 glide-update: protoc-ratelimiter glide-update-base        ## Run full glide rebuild
 
@@ -54,7 +61,12 @@ docker-build: diagnose-target-build docker-build-base        ## Install dependen
 
 docker-push: diagnose-target-push docker-push-base          ## Push docker image to a docker hub
 
-clean: clean-base clean-ratelimiter    ## clean all build artifacts
+clean-health-checker-builds:
+	rm -rf ./build
+	rm -rf ./controller/build
+	rm -rf ./jmbuild/build
+
+clean: clean-base clean-ratelimiter clean-health-checker-builds   ## clean all build artifacts
 	rm -rf build; \
 	rm -f ./$(RATELIMITER_SUBDIR)/$(RATELIMITER_FNAME).pb.go
 
@@ -65,3 +77,14 @@ docker-push-toolchain-container:  ## build docker container for running the buil
 	docker push "$(TOOLCHAIN_DOCKER_HOST)/$(TOOLCHAIN_DOCKER_NAMESPACE)/$(TOOLCHAIN_DOCKER_IMG_NAME):$(TOOLCHAIN_IMAGE_TAG)"
 
 toolchain-container: docker-build-toolchain-container docker-push-toolchain-container ## Build and push toolchain-container
+
+undeploy-service:
+	kubectl delete -f helmdeploy_rendered/ffdl-trainer/templates/services/trainer-service.yaml; \
+	kubectl delete -f helmdeploy_rendered/ffdl-trainer/templates/services/trainer-deployment.yaml
+
+deploy-service:
+	kubectl apply -f helmdeploy_rendered/ffdl-trainer/templates/services/trainer-deployment.yaml -f helmdeploy_rendered/ffdl-trainer/templates/services/trainer-service.yaml
+
+redeploy-service: undeploy-service deploy-service
+
+rebuild-service: docker-build docker-push redeploy-service cli-grpc-config

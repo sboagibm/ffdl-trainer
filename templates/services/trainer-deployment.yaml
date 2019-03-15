@@ -29,7 +29,7 @@ spec:
 {{ if ne .Values.env "dev" }}
       - name: "mongo-ssl-cert"
         secret:
-          secretName: trainer-secrets
+          secretName: trainer-v2-secrets
           items: [{
             key: DLAAS_MONGO_CERT,
             path: mongo/mongo.cert
@@ -65,38 +65,38 @@ spec:
         - name: DLAAS_MONGO_ADDRESS
           valueFrom:
              secretKeyRef:
-               name: trainer-secrets
+               name: trainer-v2-secrets
                key: DLAAS_MONGO_ADDRESS
         - name: DLAAS_MONGO_USERNAME
           valueFrom:
             secretKeyRef:
-              name: trainer-secrets
+              name: trainer-v2-secrets
               key: DLAAS_MONGO_USERNAME
         - name: DLAAS_MONGO_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: trainer-secrets
+              name: trainer-v2-secrets
               key: DLAAS_MONGO_PASSWORD
 {{ end }}
         - name: DLAAS_OBJECTSTORE_TYPE
           valueFrom:
             secretKeyRef:
-              name: trainer-secrets
+              name: trainer-v2-secrets
               key: DLAAS_OBJECTSTORE_TYPE
         - name: DLAAS_OBJECTSTORE_AUTH_URL
           valueFrom:
             secretKeyRef:
-              name: trainer-secrets
+              name: trainer-v2-secrets
               key: DLAAS_OBJECTSTORE_AUTH_URL
         - name: DLAAS_OBJECTSTORE_USER_NAME
           valueFrom:
             secretKeyRef:
-              name: trainer-secrets
+              name: trainer-v2-secrets
               key: DLAAS_OBJECTSTORE_USER_NAME
         - name: DLAAS_OBJECTSTORE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: trainer-secrets
+              name: trainer-v2-secrets
               key: DLAAS_OBJECTSTORE_PASSWORD
         - name: DLAAS_GPU_LIMITS
           value: {{.Values.trainer.gpu_limits}}

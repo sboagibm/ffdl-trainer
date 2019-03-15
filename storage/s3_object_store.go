@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package storage
 
 import (
@@ -30,7 +31,6 @@ import (
 
 	"github.com/AISphere/ffdl-commons/config"
 
-	"github.com/AISphere/ffdl-commons/logger"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -38,6 +38,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/spf13/viper"
+	"github.com/AISphere/ffdl-commons/logger"
 )
 
 const (
@@ -101,13 +102,9 @@ func (os *s3ObjectStore) Connect() error {
 // Determine whether the S3 client should use path-style addressing or not
 // See http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html
 func (os *s3ObjectStore) usePathStyleAddressing() bool {
-	// to enable running in local environment (minikube), use s3 path style
-	// addressing if the URL containts a kubernetes host name.
-	if strings.Contains(os.conf[AuthURLKey], "svc.cluster.local") {
-		return true
-	}
-	// by default, don't use path-style addressing (i.e., use domain name based addressing)
-	return false
+	// always use path-style addressing, which is needed if the url is
+	// a kubernetes host name or a cluster IP.
+	return true
 }
 
 func (os *s3ObjectStore) UploadArchive(container string, object string, payload []byte) error {

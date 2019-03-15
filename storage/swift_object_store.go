@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package storage
 
 import (
@@ -28,10 +29,10 @@ import (
 
 	"github.com/AISphere/ffdl-commons/config"
 
-	"github.com/AISphere/ffdl-commons/logger"
 	"github.com/ncw/swift"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/AISphere/ffdl-commons/logger"
 )
 
 const (

@@ -275,7 +275,7 @@ func (m *CreateRequest) GetEvaluationMetrics() *EMExtractionSpec {
 // EMExtractionSpec represents the specification for extracting structured evaluation metrics from training jobs.
 // It is used across all log collectors, so some fields may not be relevent for all log collectors.
 // Note: Don't use enums with this, as need to do untyped YAML convert to string and back
-// Refer to https://github.com/AISphere/ffdl-metrics for complete
+// Refer to https://github.com/AISphere/ffdl/training-metrics-service for complete
 // documentation.
 type EMExtractionSpec struct {
 	// Loosly typed string representing what kind of log-collector to use.

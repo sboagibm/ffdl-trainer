@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+
 package trainer
 
 import (
-	"github.com/AISphere/ffdl-commons/logger"
 	log "github.com/sirupsen/logrus"
+	"github.com/AISphere/ffdl-commons/logger"
 )
 
 func logEntry() *log.Entry {

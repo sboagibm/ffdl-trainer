@@ -25,8 +25,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AISphere/ffdl-commons/metricsmon"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/AISphere/ffdl-commons/metricsmon"
 )
 
 var (
